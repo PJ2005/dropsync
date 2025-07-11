@@ -144,7 +144,7 @@ Type=simple
 User=$USER
 WorkingDirectory=$WORKING_DIR
 Environment=PATH=$WORKING_DIR/$VENV_DIR/bin
-ExecStart=$WORKING_DIR/$VENV_DIR/bin/python $WORKING_DIR/app/main.py
+ExecStart=$WORKING_DIR/$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=10
 StandardOutput=journal

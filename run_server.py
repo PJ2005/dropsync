@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-IoT DropSync - Start Script
-Comprehensive startup script for the DropSync system
+IoT DropSync - Direct Run Script
+Alternative startup script that runs the server directly with uvicorn
 """
 
 import os
@@ -49,27 +49,46 @@ def check_config_files():
     
     for config_file in config_files:
         if not Path(config_file).exists():
-            print(f"⚠️  Warning: {config_file} not found")
+            print(f"⚠️  Warning: {config_file} not found - creating default")
+            create_default_config(config_file)
         else:
             print(f"✅ Found config file: {config_file}")
 
+def create_default_config(config_file):
+    """Create default configuration files"""
+    if config_file == "app/device_auth.json":
+        default_auth = {
+            "esp001": "secure-token-esp001-xyz123",
+            "esp002": "secure-token-esp002-abc456",
+            "esp003": "secure-token-esp003-def789"
+        }
+        
+        import json
+        with open(config_file, 'w') as f:
+            json.dump(default_auth, f, indent=2)
+        print(f"✅ Created default {config_file}")
+
 def start_server():
-    """Start the FastAPI server"""
+    """Start the FastAPI server with uvicorn"""
     print("\n🚀 Starting IoT DropSync Server...")
     print("Dashboard: http://localhost:8000/dashboard")
     print("API Docs: http://localhost:8000/api/v1/docs")
     print("\nPress Ctrl+C to stop the server\n")
     
     try:
-        # Run the app as a module to handle relative imports
+        # Start the server with uvicorn directly
         subprocess.run([
-            sys.executable, "-m", "app.main"
+            sys.executable, "-m", "uvicorn", "app.main:app",
+            "--host", "0.0.0.0",
+            "--port", "8000",
+            "--reload"
         ], check=True)
         
     except KeyboardInterrupt:
         print("\n🛑 Server stopped by user")
     except FileNotFoundError:
-        print("❌ Error: Could not find app.main module")
+        print("❌ Error: Could not find uvicorn or app.main module")
+        print("Make sure you've installed the requirements: pip install -r requirements.txt")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error starting server: {e}")
@@ -77,7 +96,7 @@ def start_server():
 
 def main():
     """Main function"""
-    print("🔧 IoT DropSync - System Startup")
+    print("🔧 IoT DropSync - Direct Server Startup")
     print("=" * 50)
     
     # Run checks

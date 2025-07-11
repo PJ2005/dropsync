@@ -37,6 +37,10 @@ EOF
 
 # 6. Start server
 python3 start.py
+# OR alternatively:
+python3 run_server.py
+# OR directly with uvicorn:
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 2️⃣ ESP8266 Setup (3 minutes)

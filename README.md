@@ -106,14 +106,16 @@ export PORT="8000"
 
 #### 1.5 Start the Server
 ```bash
-# Method 1: Using the startup script
+# Method 1: Using the updated startup script
 python3 start.py
 
-# Method 2: Direct start
-cd app
-python3 main.py
+# Method 2: Using the direct run script
+python3 run_server.py
 
-# Method 3: Production with Gunicorn
+# Method 3: Using uvicorn directly
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Method 4: Production with Gunicorn
 pip install gunicorn
 gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
 ```
