@@ -49,9 +49,28 @@ def check_config_files():
     
     for config_file in config_files:
         if not Path(config_file).exists():
-            print(f"⚠️  Warning: {config_file} not found")
+            print(f"⚠️  Warning: {config_file} not found - creating default")
+            create_default_device_auth()
         else:
             print(f"✅ Found config file: {config_file}")
+
+def create_default_device_auth():
+    """Create default device authentication file"""
+    import json
+    
+    default_auth = {
+        "esp001": "secure-token-esp001-xyz123",
+        "esp002": "secure-token-esp002-abc456",
+        "esp003": "secure-token-esp003-def789"
+    }
+    
+    # Ensure app directory exists
+    Path("app").mkdir(exist_ok=True)
+    
+    with open("app/device_auth.json", 'w') as f:
+        json.dump(default_auth, f, indent=2)
+    
+    print("✅ Created default device_auth.json with 3 device tokens")
 
 def start_server():
     """Start the FastAPI server"""
@@ -61,15 +80,19 @@ def start_server():
     print("\nPress Ctrl+C to stop the server\n")
     
     try:
-        # Run the app as a module to handle relative imports
+        # Use uvicorn directly to avoid module import issues
         subprocess.run([
-            sys.executable, "-m", "app.main"
+            sys.executable, "-m", "uvicorn", "app.main:app",
+            "--host", "0.0.0.0",
+            "--port", "8000",
+            "--reload"
         ], check=True)
         
     except KeyboardInterrupt:
         print("\n🛑 Server stopped by user")
     except FileNotFoundError:
-        print("❌ Error: Could not find app.main module")
+        print("❌ Error: Could not find uvicorn. Please install requirements:")
+        print("pip install -r requirements.txt")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error starting server: {e}")

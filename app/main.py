@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pathlib import Path
+from contextlib import asynccontextmanager
 import os
 import json
 
@@ -22,14 +23,54 @@ from .api.admin import router as admin_router
 # Initialize settings and create directories
 settings.create_directories()
 
-# Initialize FastAPI app
+# Lifespan event handler (replaces deprecated on_event)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle application startup and shutdown"""
+    # Startup
+    print(f"Starting {settings.PROJECT_NAME} v{settings.VERSION}")
+    print(f"Dashboard available at: http://{settings.HOST}:{settings.PORT}/dashboard")
+    print(f"API documentation at: http://{settings.HOST}:{settings.PORT}{settings.API_V1_PREFIX}/docs")
+    
+    # Log startup
+    from .database import SessionLocal
+    db = SessionLocal()
+    try:
+        SystemLogger.log_event(
+            db, "system_startup", "system",
+            f"{settings.PROJECT_NAME} v{settings.VERSION} started"
+        )
+    except Exception as e:
+        print(f"Failed to log startup event: {e}")
+    finally:
+        db.close()
+    
+    yield  # Application runs here
+    
+    # Shutdown
+    print(f"Shutting down {settings.PROJECT_NAME}")
+    
+    # Log shutdown
+    db = SessionLocal()
+    try:
+        SystemLogger.log_event(
+            db, "system_shutdown", "system",
+            f"{settings.PROJECT_NAME} v{settings.VERSION} shutting down"
+        )
+    except Exception as e:
+        print(f"Failed to log shutdown event: {e}")
+    finally:
+        db.close()
+
+# Initialize FastAPI app with lifespan
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description=settings.DESCRIPTION,
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     docs_url=f"{settings.API_V1_PREFIX}/docs",
-    redoc_url=f"{settings.API_V1_PREFIX}/redoc"
+    redoc_url=f"{settings.API_V1_PREFIX}/redoc",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -223,50 +264,10 @@ async def health_check(db: Session = Depends(get_db)):
 if settings.STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
 
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Application startup tasks"""
-    print(f"Starting {settings.PROJECT_NAME} v{settings.VERSION}")
-    print(f"Dashboard available at: http://{settings.HOST}:{settings.PORT}/dashboard")
-    print(f"API documentation at: http://{settings.HOST}:{settings.PORT}{settings.API_V1_PREFIX}/docs")
-    
-    # Log startup
-    from .database import SessionLocal
-    db = SessionLocal()
-    try:
-        SystemLogger.log_event(
-            db, "system_startup", "system",
-            f"{settings.PROJECT_NAME} v{settings.VERSION} started"
-        )
-    except Exception as e:
-        print(f"Failed to log startup event: {e}")
-    finally:
-        db.close()
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown tasks"""
-    print(f"Shutting down {settings.PROJECT_NAME}")
-    
-    # Log shutdown
-    from .database import SessionLocal
-    db = SessionLocal()
-    try:
-        SystemLogger.log_event(
-            db, "system_shutdown", "system",
-            f"{settings.PROJECT_NAME} v{settings.VERSION} shutting down"
-        )
-    except Exception as e:
-        print(f"Failed to log shutdown event: {e}")
-    finally:
-        db.close()
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=True,
