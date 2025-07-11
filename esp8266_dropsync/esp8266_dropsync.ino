@@ -19,8 +19,8 @@
 
 // ============== CONFIGURATION ==============
 // WiFi Configuration - UPDATE THESE VALUES
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char* ssid = "YOUR_WIFI_SSID";  // Replace with your WiFi name
+const char* password = "YOUR_WIFI_PASSWORD";  // Replace with your WiFi password
 
 // Device Configuration - UPDATE THESE VALUES
 const char* device_id = "esp001";  // Must match device_auth.json on Pi
@@ -29,7 +29,7 @@ const char* device_name = "ESP8266 Field Node";
 const char* firmware_version = "1.2.0";
 
 // Server Configuration - UPDATE WITH YOUR RASPBERRY PI IP
-const char* server = "http://192.168.1.100:8000";  // Replace with your Pi's IP
+const char* server = "http://192.168.1.100:8000";  // Replace with your Pi's IP address
 const char* api_base = "/api/v1";
 
 // Timing Configuration
